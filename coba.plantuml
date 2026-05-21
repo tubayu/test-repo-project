@@ -1,0 +1,72 @@
+@startuml helloword
+title Activity Diagram (Swimlane)\nSistem Penyewaan Lapangan Mini Soccer
+
+|User|
+start
+:Login / Registrasi;
+
+if (Sudah punya akun?) then (Ya)
+  :Masuk ke Beranda;
+else (Tidak)
+  :Registrasi Akun;
+  :Login;
+endif
+
+:Melihat lapangan & jadwal;
+:Memilih lapangan,\ntanggal bermain,\ndan slot jadwal;
+
+|Sistem|
+if (Slot tersedia?) then (Ya)
+  :Membuat data pemesanan;
+  :Set status pemesanan = menunggu pembayaran;
+  :Membuat detail pemesanan;
+  :Hitung total harga;
+
+  fork
+    :Menampilkan instruksi pembayaran;
+  fork again
+    :Mengunci slot jadwal;
+  end fork
+
+  |User|
+  if (Melakukan pembayaran?) then (Ya)
+    :Melakukan pembayaran;
+    :Upload bukti pembayaran;
+
+    |Sistem|
+    :Menyimpan data pembayaran\n(status = menunggu verifikasi);
+
+    |Admin|
+    if (Pembayaran valid?) then (Ya)
+      :Verifikasi pembayaran;
+
+      |Sistem|
+      :Update status pembayaran = terverifikasi;
+      :Update status pemesanan = dibayar;
+      :Pelaksanaan sewa lapangan;
+      :Update status pemesanan = selesai;
+
+    else (Tidak)
+      :Menolak pembayaran;
+
+      |Sistem|
+      :Update status pembayaran = ditolak;
+      :Update status pemesanan = batal;
+      :Membuka kembali slot jadwal;
+    endif
+
+  else (Tidak)
+    |Sistem|
+    :Membatalkan pemesanan;
+    :Menghapus / menonaktifkan detail pemesanan;
+    :Membuka kembali slot jadwal;
+  endif
+
+else (Tidak)
+  |Sistem|
+  :Menampilkan pesan\nslot tidak tersedia;
+endif
+
+|User|
+stop
+@enduml
